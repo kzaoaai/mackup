@@ -201,9 +201,22 @@ class ApplicationProfile(object):
                         " home.\nDo you want to replace it with"
                         " your backup?".format(file_type, filename)
                     ):
+                        # For --copy-only option, just copy the file and skip the rest
+                        if self.copy_only:
+                            # Copy the file
+                            utils.copy(mackup_filepath, home_filepath)
+                            continue
+                        # Delete the file in the home
                         utils.delete(home_filepath)
+                        # Link the backuped file to its original place
                         utils.link(mackup_filepath, home_filepath)
                 else:
+                    # For --copy-only option, just copy the file and skip the rest
+                    if self.copy_only:
+                        # Copy the file
+                        utils.copy(mackup_filepath, home_filepath)
+                        continue
+                    # Link the backuped file to its original place
                     utils.link(mackup_filepath, home_filepath)
             elif self.verbose:
                 if os.path.exists(home_filepath):
