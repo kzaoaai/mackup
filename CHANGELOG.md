@@ -15,6 +15,7 @@
 - Add support for PHPStorm 2024.1 (via @edwinvdpol)
 - Add support for WezTerm (via @asm0dey)
 - Add support for Ghostty (via @michaeltinsley)
+- Add --copy-only option (via @dracorp)
 
 ## Mackup 0.8.40
 
