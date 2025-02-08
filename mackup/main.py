@@ -98,7 +98,7 @@ def main():
             app_names = mckp.get_apps_to_backup();
 
         # Backup each application
-        for app_name in sorted(mckp.app_names):
+        for app_name in sorted(app_names):
             app = ApplicationProfile(
                 mckp, app_db.get_files(app_name), dry_run, verbose, copy_only
             )
@@ -135,8 +135,7 @@ def main():
 
         for app_name in sorted(app_names):
             app = ApplicationProfile(
-                mckp, app_db.get_files(app_name), dry_run, verbose, copy_only
-            )
+                mckp, app_db.get_files(app_name), dry_run, verbose, copy_only)
             printAppHeader(app_name)
             app.restore()
 

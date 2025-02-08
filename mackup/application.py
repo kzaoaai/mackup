@@ -203,6 +203,8 @@ class ApplicationProfile(object):
                     ):
                         # For --copy-only option, just copy the file and skip the rest
                         if self.copy_only:
+                            # Delete the local file
+                            utils.delete(home_filepath)
                             # Copy the file
                             utils.copy(mackup_filepath, home_filepath)
                             continue
