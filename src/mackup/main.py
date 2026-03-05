@@ -139,10 +139,7 @@ def main() -> None:
     elif args["backup"]:
         mckp.check_for_usable_backup_env()
 
-        if args["<app>"]:
-            app_names = set(args["<app>"])
-        else:
-            app_names = mckp.get_apps_to_backup()
+        app_names = set(args["<app>"]) if args["<app>"] else mckp.get_apps_to_backup()
 
         # Create a backup of the files of each application
         for app_name in sorted(app_names):
@@ -156,10 +153,7 @@ def main() -> None:
     elif args["restore"]:
         mckp.check_for_usable_restore_env()
 
-        if args["<app>"]:
-            app_names = set(args["<app>"])
-        else:
-            app_names = mckp.get_apps_to_backup()
+        app_names = set(args["<app>"]) if args["<app>"] else mckp.get_apps_to_backup()
 
         # Recover a backup of the files of each application
         for app_name in sorted(app_names):
@@ -172,10 +166,7 @@ def main() -> None:
         # Check the env where the command is being run
         mckp.check_for_usable_backup_env()
 
-        if args["<app>"]:
-            app_names = set(args["<app>"])
-        else:
-            app_names = mckp.get_apps_to_backup()
+        app_names = set(args["<app>"]) if args["<app>"] else mckp.get_apps_to_backup()
 
         # Create a link for each application
         for app_name in sorted(app_names):
@@ -188,10 +179,7 @@ def main() -> None:
         # Check the env where the command is being run
         mckp.check_for_usable_restore_env()
 
-        if args["<app>"]:
-            app_names = set(args["<app>"])
-        else:
-            app_names = mckp.get_apps_to_backup()
+        app_names = set(args["<app>"]) if args["<app>"] else mckp.get_apps_to_backup()
 
         if dry_run or (
             utils.confirm(
