@@ -6,11 +6,11 @@ Copyright (C) 2013-2025 Laurent Raufaste <http://glop.org/>
 Usage:
   mackup [options] list
   mackup [options] show <application>
-  mackup [options] backup
-  mackup [options] restore
-  mackup [options] link install
-  mackup [options] link
-  mackup [options] link uninstall
+  mackup [options] backup [--all | <app>...]
+  mackup [options] restore [--all | <app>...]
+  mackup [options] link install [--all | <app>...]
+  mackup [options] link [--all | <app>...]
+  mackup [options] link uninstall [--all | <app>...]
   mackup (-h | --help)
 
 Options:
@@ -139,8 +139,13 @@ def main() -> None:
     elif args["backup"]:
         mckp.check_for_usable_backup_env()
 
+        if args["<app>"]:
+            app_names = set(args["<app>"])
+        else:
+            app_names = mckp.get_apps_to_backup()
+
         # Create a backup of the files of each application
-        for app_name in sorted(mckp.get_apps_to_backup()):
+        for app_name in sorted(app_names):
             app: ApplicationProfile = ApplicationProfile(
                 mckp, app_db.get_files(app_name), dry_run, verbose,
             )
@@ -151,8 +156,13 @@ def main() -> None:
     elif args["restore"]:
         mckp.check_for_usable_restore_env()
 
+        if args["<app>"]:
+            app_names = set(args["<app>"])
+        else:
+            app_names = mckp.get_apps_to_backup()
+
         # Recover a backup of the files of each application
-        for app_name in sorted(mckp.get_apps_to_backup()):
+        for app_name in sorted(app_names):
             app = ApplicationProfile(mckp, app_db.get_files(app_name), dry_run, verbose)
             print_app_header(app_name)
             app.copy_files_from_mackup_folder()
@@ -162,8 +172,13 @@ def main() -> None:
         # Check the env where the command is being run
         mckp.check_for_usable_backup_env()
 
+        if args["<app>"]:
+            app_names = set(args["<app>"])
+        else:
+            app_names = mckp.get_apps_to_backup()
+
         # Create a link for each application
-        for app_name in sorted(mckp.get_apps_to_backup()):
+        for app_name in sorted(app_names):
             app = ApplicationProfile(mckp, app_db.get_files(app_name), dry_run, verbose)
             print_app_header(app_name)
             app.link_install()
@@ -173,19 +188,24 @@ def main() -> None:
         # Check the env where the command is being run
         mckp.check_for_usable_restore_env()
 
+        if args["<app>"]:
+            app_names = set(args["<app>"])
+        else:
+            app_names = mckp.get_apps_to_backup()
+
         if dry_run or (
             utils.confirm(
-                "You are going to uninstall Mackup.\n"
-                "Every configuration file, setting and dotfile"
-                " managed by Mackup will be unlinked and copied back"
-                " to their original place, in your home folder.\n"
+                "You are going to unlink Mackup managed configuration files.\n"
                 "Are you sure?",
             )
         ):
             # Uninstall the apps except Mackup, which we'll uninstall last, to
             # keep the settings as long as possible
-            app_names = mckp.get_apps_to_backup()
-            app_names.discard(MACKUP_APP_NAME)
+            if not args["<app>"] and MACKUP_APP_NAME in app_names:
+                app_names.discard(MACKUP_APP_NAME)
+                uninstall_mackup_app = True
+            else:
+                uninstall_mackup_app = False
 
             for app_name in sorted(app_names):
                 app = ApplicationProfile(
@@ -194,48 +214,52 @@ def main() -> None:
                 print_app_header(app_name)
                 app.link_uninstall()
 
-            # Restore the Mackup config before any other config, as we might
-            # need it to know about custom settings
-            mackup_app = ApplicationProfile(
-                mckp, app_db.get_files(MACKUP_APP_NAME), dry_run, verbose,
-            )
-            mackup_app.link_uninstall()
+            if uninstall_mackup_app:
+                # Restore the Mackup config before any other config, as we might
+                # need it to know about custom settings
+                mackup_app = ApplicationProfile(
+                    mckp, app_db.get_files(MACKUP_APP_NAME), dry_run, verbose,
+                )
+                mackup_app.link_uninstall()
 
-            # Delete the Mackup folder in Dropbox
-            # Don't delete this as there might be other Macs that aren't
-            # uninstalled yet
-            # delete(mckp.mackup_folder)
+                # Delete the Mackup folder in Dropbox
+                # Don't delete this as there might be other Macs that aren't
+                # uninstalled yet
+                # delete(mckp.mackup_folder)
 
-            print(
-                "\n"
-                "All your files have been put back into place. You can now"
-                " safely uninstall Mackup.\n"
-                "\n"
-                "Thanks for using Mackup!",
-            )
+                print(
+                    "\n"
+                    "All your files have been put back into place. You can now"
+                    " safely uninstall Mackup.\n"
+                    "\n"
+                    "Thanks for using Mackup!",
+                )
 
     # mackup link
     elif args["link"]:
         # Check the env where the command is being run
         mckp.check_for_usable_restore_env()
 
-        # Restore the Mackup config before any other config, as we might need
-        # it to know about custom settings
-        mackup_app = ApplicationProfile(
-            mckp, app_db.get_files(MACKUP_APP_NAME), dry_run, verbose,
-        )
-        print_app_header(MACKUP_APP_NAME)
-        mackup_app.link()
+        if args["<app>"]:
+            app_names = set(args["<app>"])
+        else:
+            # Restore the Mackup config before any other config, as we might need
+            # it to know about custom settings
+            mackup_app = ApplicationProfile(
+                mckp, app_db.get_files(MACKUP_APP_NAME), dry_run, verbose,
+            )
+            print_app_header(MACKUP_APP_NAME)
+            mackup_app.link()
 
-        # Initialize again the apps db, as the Mackup config might have changed
-        # it
-        mckp = Mackup(config_file)
-        app_db = ApplicationsDatabase()
+            # Initialize again the apps db, as the Mackup config might have changed
+            # it
+            mckp = Mackup(config_file)
+            app_db = ApplicationsDatabase()
 
-        # Restore the rest of the app configs, using the restored Mackup config
-        app_names = mckp.get_apps_to_backup()
-        # Mackup has already been done
-        app_names.discard(MACKUP_APP_NAME)
+            # Restore the rest of the app configs, using the restored Mackup config
+            app_names = mckp.get_apps_to_backup()
+            # Mackup has already been done
+            app_names.discard(MACKUP_APP_NAME)
 
         for app_name in sorted(app_names):
             app = ApplicationProfile(mckp, app_db.get_files(app_name), dry_run, verbose)
